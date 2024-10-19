@@ -87,6 +87,7 @@ canvas {
   border-style: solid;
   border-radius: 1rem;
   box-shadow: 0rem 0.75rem 1.25rem black;
+  margin-bottom: 2rem;
 }
 
 @media (prefers-color-scheme: light) {
