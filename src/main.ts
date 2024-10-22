@@ -40,6 +40,8 @@ interface Button {
 
 const buttons: Array<Button> = [
     { text: "clear", action: clear },
+    { text: "undo", action: undo },
+    { text: "redo", action: redo },
 ];
 
 // ---------------------------------------------- DISPLAY
@@ -111,6 +113,20 @@ app.append(buttonDiv);
 function clear() {
     drawnLines.splice(0, drawnLines.length);
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+}
+
+function undo() {
+    if (drawnLines.length > 0) {
+        linesToDraw.push(drawnLines.pop());
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
+}
+
+function redo() {
+    if (linesToDraw.length > 0) {
+        drawnLines.push(linesToDraw.pop());
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
 }
 
 buttons.forEach((element) => {
