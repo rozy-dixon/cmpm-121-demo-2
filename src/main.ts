@@ -12,6 +12,8 @@ document.title = APP_NAME;
 // to-do
 // - PWA/manifest
 // undo and redo clear
+// - pass vars into events
+// - destroy redo after clear
 
 // ---------------------------------------------- INITS
 
@@ -22,6 +24,32 @@ interface Input {
 }
 
 const cursor: Input = { x: 0, y: 0, drawing: false };
+
+interface Preview {
+    draw: () => void;
+}
+
+function previewInput(x: number, y: number, thickness: boolean): Preview {
+    function draw() {
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+
+        pastEdits.forEach((line) => {
+            line?.display();
+        });
+
+        context?.beginPath();
+        (context as CanvasRenderingContext2D).arc(x, y, 15, 0, Math.PI * 2);
+        (context as CanvasRenderingContext2D).lineWidth = thickness == true
+            ? markerWeight : pencilWeight;
+        (context as CanvasRenderingContext2D).globalAlpha = 0.25;
+        context?.stroke();
+        context?.closePath();
+    }
+
+    return { draw }
+}
+
+let inputPreview: Preview;
 
 interface Point {
     x: number;
@@ -43,9 +71,9 @@ function drawLine(startX: number, startY: number, thickness: boolean): Line {
     const points: Array<Point> = [{ x: startX, y: startY }];
 
     function display() {
+        (context as CanvasRenderingContext2D).globalAlpha = 1;
         (context as CanvasRenderingContext2D).lineWidth = thickness == true
-            ? markerWeight
-            : pencilWeight;
+            ? markerWeight : pencilWeight;
         (context as CanvasRenderingContext2D).lineCap = "round";
 
         context?.beginPath();
@@ -67,21 +95,6 @@ const pastEdits: Array<Line | undefined> = [];
 const futureEdits: Array<Line | undefined> = [];
 
 let presentEdit: Line | undefined = undefined;
-
-interface Button {
-    // src = https://chat.brace.tools/s/43dd6ec1-7db6-4588-a338-49af88ca2f4c
-    text: string;
-    action: () => void;
-    class: string;
-}
-
-const buttons: Array<Button> = [
-    { text: "clear", action: clear, class: "clear" },
-    { text: "undo", action: undo, class: "undo" },
-    { text: "redo", action: redo, class: "redo" },
-    { text: "marker", action: thick, class: "thick" },
-    { text: "pencil", action: thin, class: "thin" },
-];
 
 // ---------------------------------------------- DISPLAY
 
@@ -109,6 +122,9 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
+    inputPreview = previewInput(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top, isThick)
+    canvas.dispatchEvent(new CustomEvent("tool-moved"));
+    
     if (cursor.drawing && presentEdit) {
         presentEdit.drag(e.offsetX, e.offsetY);
 
@@ -135,7 +151,28 @@ canvas.addEventListener("drawing-changed", function () {
     });
 });
 
+canvas.addEventListener("tool-moved", function () {
+    if (!cursor.drawing) {
+        inputPreview.draw();
+    }
+});
+
 // ---------------------------------------------- CANVAS BUTTONS
+
+interface Button {
+    // src = https://chat.brace.tools/s/43dd6ec1-7db6-4588-a338-49af88ca2f4c
+    text: string;
+    action: () => void;
+    class: string;
+}
+
+const buttons: Array<Button> = [
+    { text: "clear", action: clear, class: "clear" },
+    { text: "undo", action: undo, class: "undo" },
+    { text: "redo", action: redo, class: "redo" },
+    { text: "marker", action: thick, class: "thick" },
+    { text: "pencil", action: thin, class: "thin" },
+];
 
 const buttonDiv = document.createElement("div");
 app.append(buttonDiv);
