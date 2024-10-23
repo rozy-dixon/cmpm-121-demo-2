@@ -32,31 +32,34 @@ interface Preview {
     draw: () => void;
 }
 
-function previewInput(x: number, y: number, thickness: boolean, emoji: string | undefined): Preview {
+function previewInput(
+    x: number,
+    y: number,
+    thickness: boolean,
+    emoji: string | undefined,
+): Preview {
     function draw() {
-        context?.clearRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
         pastEdits.forEach((line) => {
-            line?.display();
+            line.display();
         });
 
         if (stickerMode && emoji != undefined) {
-            (context as CanvasRenderingContext2D).globalAlpha = 0.25;
-            (context as CanvasRenderingContext2D).font = `${stickerSize}px Inter`;
-            (context as CanvasRenderingContext2D).fillText(
+            context.globalAlpha = 0.25;
+            context.font = `${stickerSize}px Inter`;
+            context.fillText(
                 emoji,
                 x - (stickerSize / 2),
                 y + (stickerSize / 2),
             );
         } else {
-            context?.beginPath();
-            (context as CanvasRenderingContext2D).arc(x, y, 15, 0, Math.PI * 2);
-            (context as CanvasRenderingContext2D).lineWidth = thickness == true
-                ? markerWeight
-                : pencilWeight;
-            (context as CanvasRenderingContext2D).globalAlpha = 0.25;
-            context?.stroke();
-            context?.closePath();
+            context.beginPath();
+            context.arc(x, y, 15, 0, Math.PI * 2);
+            context.lineWidth = thickness == true ? markerWeight : pencilWeight;
+            context.globalAlpha = 0.25;
+            context.stroke();
+            context.closePath();
         }
     }
 
@@ -66,6 +69,11 @@ function previewInput(x: number, y: number, thickness: boolean, emoji: string | 
 let inputPreview: Preview;
 
 // LINE
+
+interface Edit {
+    display: () => void;
+    drag: (x: number, y: number) => void;
+}
 
 interface Point {
     x: number;
@@ -87,19 +95,17 @@ function drawLine(startX: number, startY: number, thickness: boolean): Line {
     const points: Array<Point> = [{ x: startX, y: startY }];
 
     function display() {
-        (context as CanvasRenderingContext2D).globalAlpha = 1;
-        (context as CanvasRenderingContext2D).lineWidth = thickness == true
-            ? markerWeight
-            : pencilWeight;
-        (context as CanvasRenderingContext2D).lineCap = "round";
+        context.globalAlpha = 1;
+        context.lineWidth = thickness == true ? markerWeight : pencilWeight;
+        context.lineCap = "round";
 
-        context?.beginPath();
+        context.beginPath();
         const { x, y } = points[0];
-        context?.moveTo(x, y);
+        context.moveTo(x, y);
         for (const point of points) {
-            context?.lineTo(point.x, point.y);
+            context.lineTo(point.x, point.y);
         }
-        context?.stroke();
+        context.stroke();
     }
     function drag(x: number, y: number) {
         points.push({ x, y });
@@ -108,10 +114,10 @@ function drawLine(startX: number, startY: number, thickness: boolean): Line {
     return { display, drag, thickness };
 }
 
-const pastEdits: Array<Line | Sticker | undefined> = [];
-const futureEdits: Array<Line | Sticker | undefined> = [];
+const pastEdits: Array<Edit> = [];
+const futureEdits: Array<Edit> = [];
 
-let presentEdit: Line | Sticker | undefined = undefined;
+let presentEdit: Edit = drawLine(0, 0, true);
 
 // STICKER
 
@@ -126,19 +132,19 @@ interface Sticker {
 
 function placeSticker(x: number, y: number, emoji: string): Sticker {
     function display() {
-        (context as CanvasRenderingContext2D).globalAlpha = 1;
-        (context as CanvasRenderingContext2D).font = `${stickerSize}px Inter`;
-        (context as CanvasRenderingContext2D).fillText(
+        context.globalAlpha = 1;
+        context.font = `${stickerSize}px Inter`;
+        context.fillText(
             emoji,
             x - (stickerSize / 2),
             y + (stickerSize / 2),
         );
     }
-    function drag (finalX: number, finalY: number) {
+    function drag(finalX: number, finalY: number) {
         x = finalX;
         y = finalY;
 
-        display()
+        display();
     }
 
     return { display, drag };
@@ -154,7 +160,7 @@ const canvas = document.createElement("canvas");
 canvas.width = canvas.height = 256;
 app.append(canvas);
 
-const context: CanvasRenderingContext2D | null = canvas.getContext("2d");
+const context: CanvasRenderingContext2D = canvas.getContext("2d")!;
 
 // ---------------------------------------------- CANVAS BASE FUNCTIONALITY
 
@@ -186,7 +192,6 @@ canvas.addEventListener("mousemove", (e) => {
     canvas.dispatchEvent(new CustomEvent("tool-moved"));
 
     if (presentEdit && cursor.drawing) {
-        console.log('hi there');
         (presentEdit as Line).drag(e.offsetX, e.offsetY);
 
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
@@ -195,7 +200,6 @@ canvas.addEventListener("mousemove", (e) => {
 
 function stopDrawing() {
     if (cursor.drawing) {
-        presentEdit = undefined;
         cursor.drawing = false;
 
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
@@ -206,9 +210,9 @@ canvas.addEventListener("mouseleave", stopDrawing);
 globalThis.addEventListener("mouseup", stopDrawing);
 
 canvas.addEventListener("drawing-changed", function () {
-    context?.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
     pastEdits.forEach((line) => {
-        line?.display();
+        line.display();
     });
 });
 
@@ -251,14 +255,14 @@ function clear() {
 
 function undo() {
     if (pastEdits.length > 0) {
-        futureEdits.push(pastEdits.pop());
+        futureEdits.push(pastEdits.pop()!);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
 }
 
 function redo() {
     if (futureEdits.length > 0) {
-        pastEdits.push(futureEdits.pop());
+        pastEdits.push(futureEdits.pop()!);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
 }
