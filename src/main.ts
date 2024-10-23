@@ -27,10 +27,35 @@ interface Point {
     y: number;
 }
 
-const drawnLines: Array<Array<Point> | undefined> = [];
-const linesToDraw: Array<Array<Point> | undefined> = [];
+// src = https://chat.brace.tools/s/d667c7d4-4bcc-45a0-9ba2-9fab4366a24f
+interface Line {
+    display: () => void;
+    drag: (x: number, y: number) => void;
+}
 
-let lineInProgress: Array<Point> | undefined = [];
+function drawLine(startX: number, startY: number): Line {
+    const points: Array<Point> = [{ x: startX, y: startY }];
+
+    function display() {
+        context?.beginPath();
+        const { x, y } = points[0];
+        context?.moveTo(x, y);
+        for (const point of points) {
+            context?.lineTo(point.x, point.y);
+        }
+        context?.stroke();
+    }
+    function drag(x: number, y: number) {
+        points.push({ x, y });
+    }
+
+    return { display, drag };
+}
+
+const pastEdits: Array<Line | undefined> = [];
+const futureEdits: Array<Line | undefined> = [];
+
+let presentEdit: Line | undefined = undefined;
 
 interface Button {
     // src = https://chat.brace.tools/s/43dd6ec1-7db6-4588-a338-49af88ca2f4c
@@ -59,32 +84,31 @@ const context: CanvasRenderingContext2D | null = canvas.getContext("2d");
 // ---------------------------------------------- CANVAS BASE FUNCTIONALITY
 
 canvas.addEventListener("mousedown", (e) => {
-    cursor.x = e.offsetX;
-    cursor.y = e.offsetY;
-    cursor.drawing = true;
-
-    lineInProgress = [];
-    drawnLines.push(lineInProgress);
-    lineInProgress.push({ x: cursor.x, y: cursor.y });
-    linesToDraw.splice(0, linesToDraw.length);
-
-    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    if (!cursor.drawing) {
+        presentEdit = drawLine(e.offsetX, e.offsetY);
+        pastEdits.push(presentEdit);
+        futureEdits.splice(0, futureEdits.length);
+        cursor.drawing = true;
+    
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if (cursor.drawing) {
-        cursor.x = e.offsetX;
-        cursor.y = e.offsetY;
-        lineInProgress?.push({ x: cursor.x, y: cursor.y });
+    if (cursor.drawing && presentEdit) {
+        presentEdit.drag(e.offsetX, e.offsetY);
 
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
 });
 
 function stopDrawing() {
-    cursor.drawing = false;
-    lineInProgress = undefined;
-    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    if (cursor.drawing) {
+        presentEdit = undefined;
+        cursor.drawing = false;
+
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
 }
 
 canvas.addEventListener("mouseleave", stopDrawing);
@@ -92,16 +116,8 @@ globalThis.addEventListener("mouseup", stopDrawing);
 
 canvas.addEventListener("drawing-changed", function () {
     context?.clearRect(0, 0, canvas.width, canvas.height);
-    drawnLines.forEach((line) => {
-        if (line != undefined && line.length > 1 && line) {
-            context?.beginPath();
-            const point: Point = line[0];
-            context?.moveTo(point.x, point.y);
-            for (const { x, y } of line) {
-                context?.lineTo(x, y);
-            }
-            context?.stroke();
-        }
+    pastEdits.forEach((line) => {
+        line?.display();
     });
 });
 
@@ -111,20 +127,20 @@ const buttonDiv = document.createElement("div");
 app.append(buttonDiv);
 
 function clear() {
-    drawnLines.splice(0, drawnLines.length);
+    pastEdits.splice(0, pastEdits.length);
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 }
 
 function undo() {
-    if (drawnLines.length > 0) {
-        linesToDraw.push(drawnLines.pop());
+    if (pastEdits.length > 0) {
+        futureEdits.push(pastEdits.pop());
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
 }
 
 function redo() {
-    if (linesToDraw.length > 0) {
-        drawnLines.push(linesToDraw.pop());
+    if (futureEdits.length > 0) {
+        pastEdits.push(futureEdits.pop());
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
 }
