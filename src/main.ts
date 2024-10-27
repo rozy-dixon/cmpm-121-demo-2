@@ -1,6 +1,6 @@
 import "./style.css";
 
-const APP_NAME = "Computer Think Pt2";
+const APP_NAME = "COMPUTER THINK 2";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
@@ -96,8 +96,8 @@ interface Point {
 }
 
 let isThick: boolean = false;
-const markerWeight = 10;
-const pencilWeight = 2;
+let markerWeight: number = 10;
+let pencilWeight: number = 2;
 
 // src = https://chat.brace.tools/s/d667c7d4-4bcc-45a0-9ba2-9fab4366a24f
 interface Line {
@@ -136,7 +136,7 @@ let presentEdit: Edit = drawLine(0, 0, true);
 
 // STICKER
 
-const stickerSize: number = 20;
+let stickerSize: number = 40;
 let stickerMode: boolean = false;
 let currentSticker: string | undefined = undefined;
 

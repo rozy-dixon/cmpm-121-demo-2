@@ -1,11 +1,19 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  --big-font: Impact, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --little-font: Helvetica, Arial, sans-serif;
+  --color: #e789d9;
+  --background-color: #141815;
+  --contrast-color: #ddd500;
+  --compliment-color: #929710;
+  --lightest-color: #f173d5;
+
+  color: var(--color);
+  background-color: var(--background-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -34,11 +42,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--contrast-color);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--contrast-color);
 }
 
 body {
@@ -47,12 +55,15 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-family: var(--little-font);
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 3.5em;
   line-height: 1.1;
   animation: wiggle 1s infinite;
+  margin-bottom: 4rem;
+  font-family: var(--big-font);
 }
 
 #app {
@@ -68,10 +79,10 @@ h1 {
   will-change: filter;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--contrast-color));
 }
 .logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #3178c6aa);
+  filter: drop-shadow(0 0 2em var(--compliment-color));
 }
 
 .card {
@@ -79,10 +90,11 @@ h1 {
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--color);
 }
 
 button {
+  color: var(--lightest-color);
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -90,19 +102,19 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--background-color);
   cursor: pointer;
   transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
   box-shadow: 0rem 0.3rem 0.5rem black;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--compliment-color);
   box-shadow: 0rem 0.45rem 0.65rem black;
   transform: translateY(-.15rem);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto yellowgreen;
+  outline: 4px auto var(--contrast-color);
 }
 
 canvas {
@@ -113,7 +125,7 @@ canvas {
   transition: border-color 0.25s;
 }
 canvas:hover {
-  border-color: #646cff;
+  border-color: var(--compliment-color);
 }
 
 div {
@@ -122,13 +134,13 @@ div {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: var(--background-color);
+    background-color: var(--color);
   }
   a:hover {
-    color: #747bff;
+    color: var(--compliment-color);
   }
   button {
-    background-color: #f9f9f9;
+    background-color: var(--lightest-color);
   }
 }
