@@ -15,6 +15,21 @@ document.title = APP_NAME;
 // - pass vars into events
 // - destroy redo after clear
 // - make selected button more concise
+// - import button
+// - stiker button to function
+// - get rid of magic numbers
+
+// ---------------------------------------------- DISPLAY
+
+const header = document.createElement("h1");
+header.innerHTML = APP_NAME;
+app.append(header);
+
+let canvas: HTMLCanvasElement = document.createElement("canvas");
+canvas.width = canvas.height = 256;
+app.append(canvas);
+
+let context: CanvasRenderingContext2D = canvas.getContext("2d")!;
 
 // ---------------------------------------------- INITS
 
@@ -125,8 +140,6 @@ const stickerSize: number = 20;
 let stickerMode: boolean = false;
 let currentSticker: string | undefined = undefined;
 
-const stickers = ["🪿", "🦢", "🕊️"];
-
 interface Sticker {
     display: () => void;
     drag: (x: number, y: number) => void;
@@ -151,18 +164,6 @@ function placeSticker(x: number, y: number, emoji: string): Sticker {
 
     return { display, drag };
 }
-
-// ---------------------------------------------- DISPLAY
-
-const header = document.createElement("h1");
-header.innerHTML = APP_NAME;
-app.append(header);
-
-const canvas = document.createElement("canvas");
-canvas.width = canvas.height = 256;
-app.append(canvas);
-
-const context: CanvasRenderingContext2D = canvas.getContext("2d")!;
 
 // ---------------------------------------------- CANVAS BASE FUNCTIONALITY
 
@@ -240,7 +241,10 @@ const buttons: Array<Button> = [
     { text: "marker", action: thick, id: "thick" },
     { text: "pencil", action: thin, id: "thin" },
     { text: "custom sticker", action: customSticker, id: "custom" },
+    { text: "export", action: exportImage, id: "export" }
 ];
+
+const stickers = ["🪿", "🦢", "🕊️"];
 
 const buttonDiv = document.createElement("div");
 app.append(buttonDiv);
@@ -281,6 +285,34 @@ function thin() {
     (document.getElementById("thin") as HTMLElement).style.outline =
         "4px auto yellowgreen";
     (document.getElementById("thick") as HTMLElement).style.outline = "none";
+}
+
+function exportImage() {
+    const canvasExport = document.createElement("canvas");
+    canvasExport.width = canvasExport.height = 1024;
+    
+    const contextExport: CanvasRenderingContext2D = canvasExport.getContext("2d")!;
+    contextExport.scale(4, 4);
+
+    const originalContext = context;
+    const originalCanvas = canvas;
+
+    context = contextExport;
+    canvas = canvasExport;
+
+    pastEdits.forEach((element) => {
+        element.display();
+    })
+
+    context = originalContext;
+    canvas = originalCanvas;
+
+    // src = https://gist.github.com/Kaundur/2aca9a9edb003555f44195e826af4084
+    const image = canvasExport.toDataURL('image/png')
+    const aDownloadLink = document.createElement('a');
+    aDownloadLink.download = 'canvas_image.png';
+    aDownloadLink.href = image;
+    aDownloadLink.click();
 }
 
 function emoji() {
