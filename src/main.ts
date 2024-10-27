@@ -125,6 +125,8 @@ const stickerSize: number = 20;
 let stickerMode: boolean = false;
 let currentSticker: string | undefined = undefined;
 
+const stickers = ["🪿", "🦢", "🕊️"];
+
 interface Sticker {
     display: () => void;
     drag: (x: number, y: number) => void;
@@ -237,9 +239,7 @@ const buttons: Array<Button> = [
     { text: "redo", action: redo, id: "redo" },
     { text: "marker", action: thick, id: "thick" },
     { text: "pencil", action: thin, id: "thin" },
-    { text: "🪿", action: emoji, id: "emoji" },
-    { text: "🦢", action: emoji, id: "emoji" },
-    { text: "🕊️", action: emoji, id: "emoji" },
+    { text: "custom sticker", action: customSticker, id: "custom" },
 ];
 
 const buttonDiv = document.createElement("div");
@@ -289,19 +289,49 @@ function emoji() {
     (document.getElementById("thin") as HTMLElement).style.outline = "none";
 }
 
+function customSticker() {
+    emoji();
+    const sticker = prompt("hi", "bird");
+    if (sticker) {
+        stickers.pop();
+        stickers.push(sticker!);
+        const button = document.getElementById("customStickerResult");
+        if (button) {
+            button.innerHTML = sticker!;
+        } else {
+            console.error("'customStickerResult' not found.");
+        }
+        currentSticker = sticker!;
+    }
+}
+
+stickers.forEach((element) => {
+    const button = document.createElement("button");
+    button.innerHTML = element;
+    button.addEventListener("click", emoji);
+    button.addEventListener("click", function () {
+        currentSticker = element;
+    });
+    emojiDiv.append(button);
+});
+
 buttons.forEach((element) => {
     const button = document.createElement("button");
-    if (element.id == "emoji") {
-        button.innerHTML = element.text;
-        button.addEventListener("click", element.action);
-        button.addEventListener("click", function () {
-            currentSticker = element.text;
-        });
+    button.id = element.id;
+    button.innerHTML = element.text;
+    button.addEventListener("click", element.action);
+    if (button.id == "custom") {
         emojiDiv.append(button);
+        stickers.push("🥚");
+        const stickerButton = document.createElement("button");
+        stickerButton.id = "customStickerResult";
+        stickerButton.innerHTML = stickers[stickers.length - 1];
+        stickerButton.addEventListener("click", emoji);
+        stickerButton.addEventListener("click", function () {
+            currentSticker = stickers[stickers.length - 1];
+        });
+        emojiDiv.append(stickerButton);
     } else {
-        button.id = element.id;
-        button.innerHTML = element.text;
-        button.addEventListener("click", element.action);
         buttonDiv.append(button);
     }
 });
