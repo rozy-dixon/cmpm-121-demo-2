@@ -24,19 +24,13 @@
 @keyframes wiggle {
   /* src = https://chat.brace.tools/s/94c7e2c4-16e2-485a-9217-1d21444fb27e */
   0% {
-    transform: translateY(0em) rotate(0deg) skew(2deg, 1deg) scale(1);
-  }
-  25% {
-    transform: translateY(0.02em) rotate(2deg) scale(1.02);
+    transform: translateY(0em);
   }
   50% {
-    transform: translateY(0em) rotate(0deg) skew(-2deg, -1deg) scale(1.03);
-  }
-  75% {
-    transform: translateY(0.02em) rotate(-2deg) scale(1.02);
+    transform: translateY(0.3em);
   }
   100% {
-    transform: translateY(0em) rotate(0deg) skew(2deg, 1deg);
+    transform: translateY(0em);
   }
 }
 
@@ -61,7 +55,7 @@ body {
 h1 {
   font-size: 3.5em;
   line-height: 1.1;
-  animation: wiggle 1s infinite;
+  animation: wiggle 2s infinite;
   margin-bottom: 4rem;
   font-family: var(--big-font);
 }
@@ -99,6 +93,7 @@ button {
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   margin: .4rem;
+  height: 2.5rem;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -115,6 +110,44 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto var(--contrast-color);
+}
+
+.range {
+  /* src = https://www.w3schools.com/howto/howto_js_rangeslider.asp */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20rem;
+  height: .5rem;
+  border-radius: .25rem;
+  background: black;
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: .75rem;
+  height: 1rem;
+  background-color: var(--compliment-color);
+  border-radius: .5rem;
+  transition: height 0.25s, background-color 0.25s;
+  cursor: pointer;
+}
+.range::-webkit-slider-thumb:hover {
+  height: 1.5rem;
+  background-color: var(--contrast-color);
+}
+
+#color-input {
+  height: 2.5rem;
+  width: 4rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  margin: .4rem;
+  background-color: var(--background-color);
+  cursor: pointer;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  box-shadow: 0rem 0.3rem 0.5rem black;
 }
 
 canvas {

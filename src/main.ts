@@ -51,6 +51,7 @@ function previewInput(
     x: number,
     y: number,
     thickness: boolean,
+    color: string,
     emoji: string | undefined,
 ): Preview {
     function draw() {
@@ -70,6 +71,7 @@ function previewInput(
             );
         } else {
             context.beginPath();
+            context.strokeStyle = color;
             context.arc(x, y, 15, 0, Math.PI * 2);
             context.lineWidth = thickness == true ? markerWeight : pencilWeight;
             context.globalAlpha = 0.25;
@@ -83,12 +85,15 @@ function previewInput(
 
 let inputPreview: Preview;
 
-// LINE
-
 interface Edit {
     display: () => void;
     drag: (x: number, y: number) => void;
 }
+
+let rangeValue: number = 100;
+let colorValue: string = "#ffffff";
+
+// LINE
 
 interface Point {
     x: number;
@@ -96,21 +101,30 @@ interface Point {
 }
 
 let isThick: boolean = false;
-let markerWeight: number = 10;
-let pencilWeight: number = 2;
+const markerWeight: number = 10;
+const pencilWeight: number = 2;
 
 // src = https://chat.brace.tools/s/d667c7d4-4bcc-45a0-9ba2-9fab4366a24f
 interface Line {
     display: () => void;
     drag: (x: number, y: number) => void;
     thickness: boolean;
+    opacity: number;
+    color: string;
 }
 
-function drawLine(startX: number, startY: number, thickness: boolean): Line {
+function drawLine(
+    startX: number,
+    startY: number,
+    thickness: boolean,
+    opacity: number,
+    color: string,
+): Line {
     const points: Array<Point> = [{ x: startX, y: startY }];
 
     function display() {
-        context.globalAlpha = 1;
+        context.globalAlpha = opacity / 100;
+        context.strokeStyle = color;
         context.lineWidth = thickness == true ? markerWeight : pencilWeight;
         context.lineCap = "round";
 
@@ -126,17 +140,17 @@ function drawLine(startX: number, startY: number, thickness: boolean): Line {
         points.push({ x, y });
     }
 
-    return { display, drag, thickness };
+    return { display, drag, thickness, opacity, color };
 }
 
 const pastEdits: Array<Edit> = [];
 const futureEdits: Array<Edit> = [];
 
-let presentEdit: Edit = drawLine(0, 0, true);
+let presentEdit: Edit = drawLine(0, 0, true, rangeValue, colorValue);
 
 // STICKER
 
-let stickerSize: number = 40;
+const stickerSize: number = 30;
 let stickerMode: boolean = false;
 let currentSticker: string | undefined = undefined;
 
@@ -176,7 +190,13 @@ canvas.addEventListener("mousedown", (e) => {
 
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     } else if (!cursor.drawing) {
-        presentEdit = drawLine(e.offsetX, e.offsetY, isThick);
+        presentEdit = drawLine(
+            e.offsetX,
+            e.offsetY,
+            isThick,
+            rangeValue,
+            colorValue,
+        );
         pastEdits.push(presentEdit);
         futureEdits.splice(0, futureEdits.length);
         cursor.drawing = true;
@@ -190,6 +210,7 @@ canvas.addEventListener("mousemove", (e) => {
         e.clientX - canvas.getBoundingClientRect().left,
         e.clientY - canvas.getBoundingClientRect().top,
         isThick,
+        colorValue,
         currentSticker,
     );
     canvas.dispatchEvent(new CustomEvent("tool-moved"));
@@ -240,17 +261,43 @@ const buttons: Array<Button> = [
     { text: "redo", action: redo, id: "redo" },
     { text: "marker", action: thick, id: "thick" },
     { text: "pencil", action: thin, id: "thin" },
+    { text: "export", action: exportImage, id: "export" },
     { text: "custom sticker", action: customSticker, id: "custom" },
-    { text: "export", action: exportImage, id: "export" }
 ];
 
 const stickers = ["🪿", "🦢", "🕊️"];
+
+// instead of doing color or rotation, I did opacity.
+// i wanted to do a color input and didn't feel like rotation fit what i wanted to make.
+const rangeDiv = document.createElement("div");
+const range = document.createElement("input") as HTMLInputElement;
+range.type = "range";
+range.className = "range";
+range.max = "100";
+range.min = "1";
+range.defaultValue = "100";
+app.append(rangeDiv);
+rangeDiv.append(range);
+
+range.addEventListener("change", function () {
+    rangeValue = Number(range.value);
+});
 
 const buttonDiv = document.createElement("div");
 app.append(buttonDiv);
 
 const emojiDiv = document.createElement("div");
 app.append(emojiDiv);
+
+const colorInput = document.createElement("input") as HTMLInputElement;
+colorInput.type = "color";
+colorInput.id = "color-input";
+colorInput.defaultValue = colorValue;
+buttonDiv.append(colorInput);
+
+colorInput.addEventListener("change", function () {
+    colorValue = colorInput.value;
+});
 
 function clear() {
     pastEdits.splice(0, pastEdits.length);
@@ -290,8 +337,10 @@ function thin() {
 function exportImage() {
     const canvasExport = document.createElement("canvas");
     canvasExport.width = canvasExport.height = 1024;
-    
-    const contextExport: CanvasRenderingContext2D = canvasExport.getContext("2d")!;
+
+    const contextExport: CanvasRenderingContext2D = canvasExport.getContext(
+        "2d",
+    )!;
     contextExport.scale(4, 4);
 
     const originalContext = context;
@@ -302,15 +351,15 @@ function exportImage() {
 
     pastEdits.forEach((element) => {
         element.display();
-    })
+    });
 
     context = originalContext;
     canvas = originalCanvas;
 
     // src = https://gist.github.com/Kaundur/2aca9a9edb003555f44195e826af4084
-    const image = canvasExport.toDataURL('image/png')
-    const aDownloadLink = document.createElement('a');
-    aDownloadLink.download = 'canvas_image.png';
+    const image = canvasExport.toDataURL("image/png");
+    const aDownloadLink = document.createElement("a");
+    aDownloadLink.download = "canvas_image.png";
     aDownloadLink.href = image;
     aDownloadLink.click();
 }
