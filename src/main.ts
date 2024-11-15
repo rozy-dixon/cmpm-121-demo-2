@@ -1,6 +1,7 @@
 import "./style.css";
 
 const APP_NAME = "COMPUTER THINK 2";
+const CANVAS_SIZE: number = 256
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
@@ -26,7 +27,7 @@ header.innerHTML = APP_NAME;
 app.append(header);
 
 let canvas: HTMLCanvasElement = document.createElement("canvas");
-canvas.width = canvas.height = 256;
+canvas.width = canvas.height = CANVAS_SIZE;
 app.append(canvas);
 
 let context: CanvasRenderingContext2D = canvas.getContext("2d")!;
@@ -63,17 +64,17 @@ function previewInput(
 
         if (stickerMode && emoji != undefined) {
             context.globalAlpha = 0.25;
-            context.font = `${stickerSize}px Inter`;
+            context.font = `${STICKER_SIZE}px Inter`;
             context.fillText(
                 emoji,
-                x - (stickerSize / 2),
-                y + (stickerSize / 2),
+                x - (STICKER_SIZE / 2),
+                y + (STICKER_SIZE / 2),
             );
         } else {
             context.beginPath();
             context.strokeStyle = color;
             context.arc(x, y, 15, 0, Math.PI * 2);
-            context.lineWidth = thickness == true ? markerWeight : pencilWeight;
+            context.lineWidth = thickness == true ? MARKER_WEIGHT : PENCIL_WEIGHT;
             context.globalAlpha = 0.25;
             context.stroke();
             context.closePath();
@@ -101,8 +102,8 @@ interface Point {
 }
 
 let isThick: boolean = false;
-const markerWeight: number = 10;
-const pencilWeight: number = 2;
+const MARKER_WEIGHT: number = 10;
+const PENCIL_WEIGHT: number = 2;
 
 // src = https://chat.brace.tools/s/d667c7d4-4bcc-45a0-9ba2-9fab4366a24f
 interface Line {
@@ -125,7 +126,7 @@ function drawLine(
     function display() {
         context.globalAlpha = opacity / 100;
         context.strokeStyle = color;
-        context.lineWidth = thickness == true ? markerWeight : pencilWeight;
+        context.lineWidth = thickness == true ? MARKER_WEIGHT : PENCIL_WEIGHT;
         context.lineCap = "round";
 
         context.beginPath();
@@ -150,7 +151,7 @@ let presentEdit: Edit = drawLine(0, 0, true, rangeValue, colorValue);
 
 // STICKER
 
-const stickerSize: number = 30;
+const STICKER_SIZE: number = 30;
 let stickerMode: boolean = false;
 let currentSticker: string | undefined = undefined;
 
@@ -162,11 +163,11 @@ interface Sticker {
 function placeSticker(x: number, y: number, emoji: string): Sticker {
     function display() {
         context.globalAlpha = 1;
-        context.font = `${stickerSize}px Inter`;
+        context.font = `${STICKER_SIZE}px Inter`;
         context.fillText(
             emoji,
-            x - (stickerSize / 2),
-            y + (stickerSize / 2),
+            x - (STICKER_SIZE / 2),
+            y + (STICKER_SIZE / 2),
         );
     }
     function drag(finalX: number, finalY: number) {
@@ -181,6 +182,8 @@ function placeSticker(x: number, y: number, emoji: string): Sticker {
 
 // ---------------------------------------------- CANVAS BASE FUNCTIONALITY
 
+const drawingChanged = new CustomEvent("drawing-changed");
+
 canvas.addEventListener("mousedown", (e) => {
     if (stickerMode && currentSticker != undefined) {
         presentEdit = placeSticker(e.offsetX, e.offsetY, currentSticker);
@@ -188,7 +191,7 @@ canvas.addEventListener("mousedown", (e) => {
         futureEdits.splice(0, futureEdits.length);
         cursor.drawing = true;
 
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     } else if (!cursor.drawing) {
         presentEdit = drawLine(
             e.offsetX,
@@ -201,7 +204,7 @@ canvas.addEventListener("mousedown", (e) => {
         futureEdits.splice(0, futureEdits.length);
         cursor.drawing = true;
 
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     }
 });
 
@@ -213,12 +216,12 @@ canvas.addEventListener("mousemove", (e) => {
         colorValue,
         currentSticker,
     );
-    canvas.dispatchEvent(new CustomEvent("tool-moved"));
+    canvas.dispatchEvent(drawingChanged);
 
     if (presentEdit && cursor.drawing) {
         (presentEdit as Line).drag(e.offsetX, e.offsetY);
 
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     }
 });
 
@@ -226,7 +229,7 @@ function stopDrawing() {
     if (cursor.drawing) {
         cursor.drawing = false;
 
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     }
 }
 
@@ -301,20 +304,20 @@ colorInput.addEventListener("change", function () {
 
 function clear() {
     pastEdits.splice(0, pastEdits.length);
-    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    canvas.dispatchEvent(drawingChanged);
 }
 
 function undo() {
     if (pastEdits.length > 0) {
         futureEdits.push(pastEdits.pop()!);
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     }
 }
 
 function redo() {
     if (futureEdits.length > 0) {
         pastEdits.push(futureEdits.pop()!);
-        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+        canvas.dispatchEvent(drawingChanged);
     }
 }
 
