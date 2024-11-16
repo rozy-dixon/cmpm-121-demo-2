@@ -259,6 +259,7 @@ interface Button {
 }
 
 const buttons: Array<Button> = [
+    { text: "add color", action: makeColorInput, id: "color-Adder" },
     { text: "clear", action: clear, id: "clear" },
     { text: "undo", action: undo, id: "undo" },
     { text: "redo", action: redo, id: "redo" },
@@ -289,18 +290,29 @@ range.addEventListener("change", function () {
 const buttonDiv = document.createElement("div");
 app.append(buttonDiv);
 
+const colorsDiv = document.createElement("div");
+buttonDiv.append(colorsDiv)
+
 const emojiDiv = document.createElement("div");
 app.append(emojiDiv);
 
-const colorInput = document.createElement("input") as HTMLInputElement;
-colorInput.type = "color";
-colorInput.id = "color-input";
-colorInput.defaultValue = colorValue;
-buttonDiv.append(colorInput);
 
-colorInput.addEventListener("change", function () {
-    colorValue = colorInput.value;
-});
+
+
+function makeColorInput(){
+    const colorInput = document.createElement("input") as HTMLInputElement;
+    colorInput.type = "color";
+    colorInput.id = "color-input";
+    colorInput.defaultValue = colorValue;
+    colorsDiv.append(colorInput);
+    colorInput.addEventListener("change", function () {
+        colorValue = colorInput.value;
+    });
+    colorInput.addEventListener("click", function () {
+        colorValue = colorInput.value;
+    });
+}
+
 
 function clear() {
     pastEdits.splice(0, pastEdits.length);
@@ -415,7 +427,13 @@ buttons.forEach((element) => {
             currentSticker = stickers[stickers.length - 1];
         });
         emojiDiv.append(stickerButton);
+    }else if (button.id == "color-Adder" || button.id == "color-input"){
+        colorsDiv.append(button);
+        makeColorInput();
     } else {
         buttonDiv.append(button);
     }
 });
+
+
+document.getElementById("thin")?.click()
