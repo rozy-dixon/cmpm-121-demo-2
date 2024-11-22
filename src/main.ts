@@ -301,6 +301,7 @@ colorInput.addEventListener("change", function () {
 
 function clear() {
     pastEdits.splice(0, pastEdits.length);
+    futureEdits.splice(0, futureEdits.length);
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 }
 
@@ -372,7 +373,7 @@ function emoji() {
 
 function customSticker() {
     emoji();
-    const sticker = prompt("hi", "bird");
+    const sticker = prompt("Enter emoji:", "bird");
     if (sticker) {
         stickers.pop();
         stickers.push(sticker!);
